@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <div id="app"></div>
+    
+    <script src="stix.js"></script>
+    <script>
+        this.stickInstance = new Stix(document.getElementById('app'), {
+            data: {
+                the_title: 'Old Title',
+                the_name: 'Johnny'
+            },
+            template: '<h1>The title is: {{ the_title }}</h1><h3>The name is: {{ the_name }}</h3>'
+        });
+
+        setTimeout(() => {
+            stickInstance.data.the_title = 'New Title';
+        }, 2000)
+    </script>
+</body>
+</html>
