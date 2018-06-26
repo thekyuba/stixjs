@@ -11,17 +11,32 @@
     
     <script src="stix.js"></script>
     <script>
-        this.stickInstance = new Stix(document.getElementById('app'), {
+        window.stick = new Stix(document.getElementById('app'), {
             data: {
                 the_title: 'Old Title',
-                the_name: 'Johnny'
+                the_name: 'Johnny',
+                the_third: 'third prop'
             },
-            template: '<h1>The title is: {{ the_title }}</h1><h3>The name is: {{ the_name }}</h3>'
+            template: `
+            <div class="container">
+                {{ the_title }}
+                <h2>
+                    The title is: {{ the_title }} and 
+                    <div> div has one more {{ the_title }} </div>
+                </h2>
+                <span>no curly braces</span>
+                <h3>The name is: {{ the_name }}</h3>
+            </div>
+            <p>Some random info {{the_third}}</p>`,
+            onMounted: function () {
+                setTimeout(() => {
+                    this.data.the_title = 'New Title';
+                }, 2000)
+                setTimeout(() => {
+                    this.data.the_title = 'Super New Title';
+                }, 4000)
+            }
         });
-
-        setTimeout(() => {
-            stickInstance.data.the_title = 'New Title';
-        }, 2000)
     </script>
 </body>
 </html>
