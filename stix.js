@@ -9,36 +9,25 @@
  *  
  */
 function Stix (rootNode, config) {
-    const self = this;
+    const vm = this;
 
     this.rootNode = rootNode;
     this.template = config.template;
-    this.data = _setData(config.data);
+    this.data = {};
     
     //lifecycle hooks
+    this.onConstructed = config.onConstructed;
     this.onMounted = config.onMounted;
 
-
-    this.render = function () {
-        // const interpolatedTemplate = _interpolate(this.template, this.data);
-
-        // this.rootNode.innerHTML = interpolatedTemplate;
-        // this.data.interpolate();
-
-        this.onMounted();
+    this.digest = function () {
+        _setRootTemplate();
+        _setReactiveData(config.data);
+        _bindViewToModel(this.rootNode, this.data);
+        _render();
     }
-
-    this.setTemplate = function () {
-        this.rootNode.innerHTML = this.template;
-    }
-
-    /** Lifecycle */
-    this.setTemplate();
-    traverseDOM(this.rootNode, this.data);
-    this.render();
 
     ////////////////////////
-    function ReactiveDataObject (data) {
+    function ReactiveData (data) {
         for (prop in data) {
             let privateProp = data[prop];
     
@@ -48,7 +37,7 @@ function Stix (rootNode, config) {
                 },
                 set: function (val) {
                     privateProp = val;
-                    this.interpolate();
+                    this.interpolateAll();
                 }
             });
         }
@@ -59,55 +48,55 @@ function Stix (rootNode, config) {
             this.nodes.push(node);
         }
 
-        this.inspectNode = function (clone) {
+        this.findInterpolation = function (clone) {
             const ownProps = Object.getOwnPropertyNames(this);
             const template = clone.innerHTML;
-            const found = ownProps.find((prop) => template.includes(prop));
+            const hasInterpolation = ownProps.find((prop) => template.includes(prop));
 
-            return found;
+            return hasInterpolation;
         }
 
-        this.interpolate = function () {
+        this.interpolateAll = function () {
             this.nodes.map((node) => {
                 Array.from(node.childNodes).map((childNode) => {
+                    //cache template only on initial interpolation
                     if (!childNode.cachedNodeValue) {
                         childNode.cachedNodeValue = childNode.nodeValue;
                     }
-                    childNode.nodeValue = _interpolate(childNode.cachedNodeValue, self.data);
+                    childNode.nodeValue = _interpolate(childNode.cachedNodeValue, vm.data);
                 });
             });
         }
     }
 
-    function _interpolate (template, data) {
-        if (template) {
-            return template.replace(/\{\{\s?(\w+)\s?\}\}/g, (match, submatch) => {
-                return data[submatch] || ''
-            });
-        }
+    function _setRootTemplate () {
+        vm.rootNode.innerHTML = vm.template;
     }
 
-    function _setData (data) {
-        const reactiveData = new ReactiveDataObject(data);
-
-        return reactiveData;
+    function _setReactiveData (data) {
+        vm.data = new ReactiveData(data);
     }
 
-    function traverseDOM (node, data) {
+    function _bindViewToModel (node, data) {
         for (let i = 0; i < node.children.length; i++) {
             var child = node.children[i];
 
             if (data) {
-                var nodeToInspect = _stripChildren(child);
-                var inspectedNode = data.inspectNode(nodeToInspect);
+                var nodeWithInterpolation = data.findInterpolation(_stripChildren(child));
 
-                if (inspectedNode) {
+                if (nodeWithInterpolation) {
                     data.pushNode(child);
                 }
             }
 
-            traverseDOM(child, data);
+            _bindViewToModel(child, data);
         }
+    }
+
+    function _render () {
+        vm.data.interpolateAll();
+
+        vm.onMounted();
     }
 
     function _stripChildren (node) {
@@ -119,4 +108,14 @@ function Stix (rootNode, config) {
 
         return clonedNode;
     }
+
+    function _interpolate (template, data) {
+        if (template) {
+            return template.replace(/\{\{\s?(\w+)\s?\}\}/g, (match, submatch) => {
+                return data[submatch] || ''
+            });
+        }
+    }
+
+    this.digest();
 }
