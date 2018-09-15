@@ -1,10 +1,10 @@
 # stixjs
-```diff
-- (work in progress)
-```
+:exclamation: This is a work in progress
+
 StixJS is a simple user interface library / mini-framework inspired by Vuejs syntax
 
 ## Example
+```js
     const stix = new Stix(document.getElementById('app'), {
         data: {
             someProp: 'somePropValue'
@@ -19,4 +19,4 @@ StixJS is a simple user interface library / mini-framework inspired by Vuejs syn
             }, 1000)
         }
     })
-    
+```
