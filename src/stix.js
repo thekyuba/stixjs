@@ -20,7 +20,6 @@
         this.data = {};
         
         //lifecycle hooks
-        this.onConstructed = config.onConstructed;
         this.onMounted = config.onMounted;
 
         this.digest = function () {
