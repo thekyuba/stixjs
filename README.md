@@ -1,2 +1,2 @@
 # stixjs
-Interface library
+Interface library (work in progress)
