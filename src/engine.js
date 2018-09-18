@@ -17,7 +17,7 @@ function ReactiveData (data) {
             },
             set: function (val) {
                 privateProp = val;
-                this.interpolateAll();
+                this.interpolateAll(val);
             }
         });
     }
@@ -29,7 +29,7 @@ function ReactiveData (data) {
     }
 
     this.findInterpolation = function (clone) {
-        const preparedClone = _stripChildren(clone)
+        const preparedClone = _removeChildren(clone)
         const ownProps = Object.getOwnPropertyNames(this);
         const template = preparedClone.innerHTML;
         const hasInterpolation = ownProps.find((prop) => template.includes(prop));
@@ -37,7 +37,7 @@ function ReactiveData (data) {
         return hasInterpolation;
     }
 
-    this.interpolateAll = function () {
+    this.interpolateAll = function (value) {
         this.nodes.map((node) => {
             Array.from(node.childNodes).map((childNode) => {
                 // cache template only on initial interpolation
@@ -45,9 +45,18 @@ function ReactiveData (data) {
                 if (!childNode.cachedNodeValue) {
                     childNode.cachedNodeValue = childNode.nodeValue;
                 }
-                childNode.nodeValue = _interpolate(childNode.cachedNodeValue);
+                
+                // exclude DOM nodes
+                // interpolate only text nodes with value
+                if (!childNode.children && !_isAllWhitespace(childNode)) {
+                    childNode.nodeValue = _interpolate(childNode.cachedNodeValue);
+                }
             });
         });
+    }
+
+    function _isAllWhitespace (node) {
+        return !(/[^\t\n\r ]/.test(node.textContent));
     }
 
     /**
@@ -61,7 +70,7 @@ function ReactiveData (data) {
         }
     }
 
-    function _stripChildren (node) {
+    function _removeChildren (node) {
         const clonedNode = node.cloneNode(true);
 
         while (clonedNode.firstElementChild) {
