@@ -1,26 +1,25 @@
 import { ReactiveData } from './engine';
 
 (function (global, factory) {
-	global.Stix = factory();
+    global.Stix = factory();
 }(window, (function () {
-    'use strict';
     /**
-     * Library constructor 
-     * @param {node} rootNode 
+     * Library constructor
+     * @param {node} rootNode
      * @param {object} config
-     *  
+     *
      * examplary config:
      * data: {name: 'Jacob'}
      * template: <div>Hello World</div>
-     *  
+     *
      */
     function Stix (rootNode, config) {
         const vm = this;
 
-        this.rootNode = _setRootNode(rootNode)
+        this.rootNode = _setRootNode();
         this.template = _setTemplate(config.template);
         this.data = {};
-        
+
         //lifecycle hooks
         this.onMounted = config.onMounted;
 
@@ -29,7 +28,7 @@ import { ReactiveData } from './engine';
             _setReactiveData(config.data);
             _bindViewToModel(this.rootNode, this.data);
             _renderInterpolatedView();
-        }
+        };
 
         ////////////////////////
         function _setRootTemplate () {
@@ -42,13 +41,13 @@ import { ReactiveData } from './engine';
 
         function _bindViewToModel (node, data) {
             for (let i = 0; i < node.children.length; i++) {
-                var child = node.children[i];
+                const child = node.children[i];
 
                 if (data) {
-                    var nodeWithInterpolation = data.findInterpolation(child);
+                    const interpolatedPropName = data.findInterpolation(child);
 
-                    if (nodeWithInterpolation) {
-                        data.pushNode(child);
+                    if (interpolatedPropName) {
+                        data.assignNodeToProp(child, interpolatedPropName);
                     }
                 }
 
@@ -57,12 +56,12 @@ import { ReactiveData } from './engine';
         }
 
         function _renderInterpolatedView () {
-            vm.data.interpolateAll();
+            vm.data.interpolateAllProps();
 
             vm.onMounted();
         }
 
-        function _setRootNode (rootNode) {
+        function _setRootNode () {
             if (!rootNode.nodeName) {
                 throw new Error(`${rootNode} is not a valid DOM node`);
             }

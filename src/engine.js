@@ -1,59 +1,73 @@
 /**
- * This is the heart of StixJS
- * The constructor takes an object and makes its props reactive usigin getters and setters
- * It keeps track of DOM nodes with reactive props
- * And triggers interpolation whenever a change is made to those props
- * @param {Object} data 
+ * Make object props reactive using getters and setters
+ * Keep track of DOM nodes with reactive props
+ * and trigger interpolation whenever a change is made to those props
+ * @param {Object} data
  */
 function ReactiveData (data) {
-    const self = this;
+    for (const prop in data) {
+        if (data.hasOwnProperty(prop)) {
+            let privateProp = data[prop];
 
-    for (let prop in data) {
-        let privateProp = data[prop];
-
-        Object.defineProperty(this, prop, {
-            get: function () {
-                return privateProp;
-            },
-            set: function (val) {
-                privateProp = val;
-                this.interpolateAll(val);
-            }
-        });
+            Object.defineProperty(this, prop, {
+                get: () => {
+                    return privateProp;
+                },
+                set: (val) => {
+                    privateProp = val;
+                    this.interpolateSingleProp(prop);
+                }
+            });
+        }
     }
 
-    this.nodes = [];
+    this.nodes = {};
 
-    this.pushNode = function (node) {
+    this.assignNodeToProp = function (node, propName) {
         this.nodes.push(node);
-    }
+        this.nodes[propName] = this.nodes[propName] || [];
+        this.nodes[propName].push(node);
+    };
 
+    /**
+     *
+     * @param {DOM node} clone
+     * @returns {String}
+     */
     this.findInterpolation = function (clone) {
-        const preparedClone = _removeChildren(clone)
+        const preparedClone = _removeChildren(clone);
         const ownProps = Object.getOwnPropertyNames(this);
         const template = preparedClone.innerHTML;
-        const hasInterpolation = ownProps.find((prop) => template.includes(prop));
+        const propName = ownProps.find((prop) => template.includes(prop));
 
-        return hasInterpolation;
-    }
+        return propName;
+    };
 
-    this.interpolateAll = function (value) {
-        this.nodes.map((node) => {
+    this.interpolateSingleProp = function (prop) {
+        this.nodes[prop].map((node) => {
             Array.from(node.childNodes).map((childNode) => {
                 // cache template only on initial interpolation
                 // this step is needed to keep track of props in curly braces
                 if (!childNode.cachedNodeValue) {
                     childNode.cachedNodeValue = childNode.nodeValue;
                 }
-                
+
                 // exclude DOM nodes
                 // interpolate only text nodes with value
                 if (!childNode.children && !_isAllWhitespace(childNode)) {
-                    childNode.nodeValue = _interpolate(childNode.cachedNodeValue);
+                    childNode.nodeValue = _interpolate.call(this, childNode.cachedNodeValue);
                 }
             });
         });
-    }
+    };
+
+    this.interpolateAllProps = function () {
+        for (const prop in this.testNodes) {
+            if (this.testNodes.hasOwnProperty(prop)) {
+                this.interpolateSingleProp(prop);
+            }
+        }
+    };
 
     function _isAllWhitespace (node) {
         return !(/[^\t\n\r ]/.test(node.textContent));
@@ -65,9 +79,11 @@ function ReactiveData (data) {
     function _interpolate (template) {
         if (template) {
             return template.replace(/\{\{\s?(\w+)\s?\}\}/g, (match, submatch) => {
-                return self[submatch] || ''
+                return this[submatch] || '';
             });
         }
+
+        return null;
     }
 
     function _removeChildren (node) {
@@ -83,4 +99,4 @@ function ReactiveData (data) {
 
 export {
     ReactiveData
-}
+};
