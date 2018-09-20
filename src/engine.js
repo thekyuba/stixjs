@@ -24,7 +24,6 @@ function ReactiveData (data) {
     this.nodes = {};
 
     this.assignNodeToProp = function (node, propName) {
-        this.nodes.push(node);
         this.nodes[propName] = this.nodes[propName] || [];
         this.nodes[propName].push(node);
     };
@@ -62,8 +61,8 @@ function ReactiveData (data) {
     };
 
     this.interpolateAllProps = function () {
-        for (const prop in this.testNodes) {
-            if (this.testNodes.hasOwnProperty(prop)) {
+        for (const prop in this.nodes) {
+            if (this.nodes.hasOwnProperty(prop)) {
                 this.interpolateSingleProp(prop);
             }
         }
