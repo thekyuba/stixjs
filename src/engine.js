@@ -4,47 +4,62 @@
  * and trigger interpolation whenever a change is made to those props
  * @param {Object} data
  */
-function ReactiveData (data) {
-    for (const prop in data) {
-        if (data.hasOwnProperty(prop)) {
-            let privateProp = data[prop];
+function Binding (config) {
+    let privateValue = config.object[config.property];
 
-            Object.defineProperty(this, prop, {
-                get: () => {
-                    return privateProp;
-                },
-                set: (val) => {
-                    privateProp = val;
-                    this.interpolateSingleProp(prop);
-                }
-            });
+    this.elementBindings = [];
+
+    this.valueGetter = () => {
+        return privateValue;
+    };
+
+    this.valueSetter = (val) => {
+        privateValue = val;
+        for (let i = 0; i < this.elementBindings.length; i++) {
+            const binding = this.elementBindings[i];
+
+            this.syncViewModel(binding.element, binding.attribute);
         }
-    }
-
-    this.nodes = {};
-
-    this.assignNodeToProp = function (node, propName) {
-        this.nodes[propName] = this.nodes[propName] || [];
-        this.nodes[propName].push(node);
     };
 
     /**
-     *
-     * @param {DOM node} clone
-     * @returns {String}
+     * Bind property to DOM element
+     * attribute and customEvent are only used for two-way biding
+     * @param {DOM node} element
+     * @param {String} attribute
+     * @param {String} customEvent
      */
-    this.findInterpolation = function (clone) {
-        const preparedClone = _removeChildren(clone);
-        const ownProps = Object.getOwnPropertyNames(this);
-        const template = preparedClone.innerHTML;
-        const propName = ownProps.find((prop) => template.includes(prop));
+    this.addBinding = (element, attribute, customEvent) => {
+        const binding = {
+            element,
+            attribute
+        };
 
-        return propName;
+        if (customEvent) {
+            element.addEventListener(customEvent, () => {
+                this.valueSetter(element[attribute]);
+            });
+            binding.event = customEvent;
+        }
+        this.elementBindings.push(binding);
+        /**
+         * TODO:
+         * Refactor this method so that it knows it has to replace nodeValue in text nodes,
+         * value in inputs etc.
+         * Make usf of the attribute variable?
+         */
+        //element[attribute] = privateValue;
+        this.syncViewModel(element, attribute);
+        return this;
     };
 
-    this.interpolateSingleProp = function (prop) {
-        this.nodes[prop].map((node) => {
-            Array.from(node.childNodes).map((childNode) => {
+    this.syncViewModel = (element, attr) => {
+        switch (element.nodeName) {
+        case 'INPUT':
+            element[attr] = privateValue;
+            break;
+        default:
+            Array.from(element.childNodes).map((childNode) => {
                 // cache template only on initial interpolation
                 // this step is needed to keep track of props in curly braces
                 if (!childNode.cachedNodeValue) {
@@ -53,49 +68,32 @@ function ReactiveData (data) {
 
                 // exclude DOM nodes
                 // interpolate only text nodes with value
-                if (!childNode.children && !_isAllWhitespace(childNode)) {
-                    childNode.nodeValue = _interpolate.call(this, childNode.cachedNodeValue);
+                if (!childNode.children) {
+                    childNode.nodeValue = _interpolate(childNode.cachedNodeValue, config.object);
                 }
             });
+            break;
+        }
+    };
+
+    Object.defineProperty(config.object, config.property, {
+        get: this.valueGetter,
+        set: this.valueSetter
+    });
+
+    config.object[config.property] = privateValue;
+}
+
+function _interpolate (template, obj) {
+    if (template) {
+        return template.replace(/\{\{\s?(\w+)\s?\}\}/g, (match, submatch) => {
+            return obj[submatch] || '';
         });
-    };
-
-    this.interpolateAllProps = function () {
-        for (const prop in this.nodes) {
-            if (this.nodes.hasOwnProperty(prop)) {
-                this.interpolateSingleProp(prop);
-            }
-        }
-    };
-
-    function _isAllWhitespace (node) {
-        return !(/[^\t\n\r ]/.test(node.textContent));
     }
 
-    /**
-     * @param {String} template
-     */
-    function _interpolate (template) {
-        if (template) {
-            return template.replace(/\{\{\s?(\w+)\s?\}\}/g, (match, submatch) => {
-                return this[submatch] || '';
-            });
-        }
-
-        return null;
-    }
-
-    function _removeChildren (node) {
-        const clonedNode = node.cloneNode(true);
-
-        while (clonedNode.firstElementChild) {
-            clonedNode.removeChild(clonedNode.firstElementChild);
-        }
-
-        return clonedNode;
-    }
+    return null;
 }
 
 export {
-    ReactiveData
+    Binding
 };

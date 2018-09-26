@@ -1,4 +1,4 @@
-import { ReactiveData } from './engine';
+import { Binding } from './engine';
 
 (function (global, factory) {
     global.Stix = factory();
@@ -18,16 +18,17 @@ import { ReactiveData } from './engine';
 
         this.rootNode = _setRootNode();
         this.template = _setTemplate(config.template);
-        this.data = {};
+        this.data = config.data;
+        this.watchers = {};
 
         //lifecycle hooks
         this.onMounted = config.onMounted;
 
         this.digest = function () {
             _setRootTemplate();
-            _setReactiveData(config.data);
+            _setReactiveData();
             _bindViewToModel(this.rootNode, this.data);
-            _renderInterpolatedView();
+            _viewReady();
         };
 
         ////////////////////////
@@ -35,8 +36,15 @@ import { ReactiveData } from './engine';
             vm.rootNode.innerHTML = vm.template;
         }
 
-        function _setReactiveData (data) {
-            vm.data = new ReactiveData(data);
+        function _setReactiveData () {
+            for (const prop in vm.data) {
+                if (vm.data.hasOwnProperty(prop)) {
+                    vm.watchers[prop] = new Binding({
+                        object: vm.data,
+                        property: prop
+                    });
+                }
+            }
         }
 
         function _bindViewToModel (node, data) {
@@ -44,10 +52,14 @@ import { ReactiveData } from './engine';
                 const child = node.children[i];
 
                 if (data) {
-                    const interpolatedPropName = data.findInterpolation(child);
+                    const interpolatedPropName = _findInterpolation(child, vm.data);
 
                     if (interpolatedPropName) {
-                        data.assignNodeToProp(child, interpolatedPropName);
+                        /**
+                         * TODO:
+                         * Decide what attribute to bind based on node type
+                         */
+                        vm.watchers[interpolatedPropName].addBinding(child, 'value', 'input');
                     }
                 }
 
@@ -55,9 +67,26 @@ import { ReactiveData } from './engine';
             }
         }
 
-        function _renderInterpolatedView () {
-            vm.data.interpolateAllProps();
+        function _findInterpolation (clone, objProps) {
+            const preparedClone = _removeChildren(clone);
+            const ownProps = Object.getOwnPropertyNames(objProps);
+            const template = preparedClone.outerHTML;
+            const propName = ownProps.find((prop) => template.includes(prop));
 
+            return propName;
+        }
+
+        function _removeChildren (node) {
+            const clonedNode = node.cloneNode(true);
+
+            while (clonedNode.firstElementChild) {
+                clonedNode.removeChild(clonedNode.firstElementChild);
+            }
+
+            return clonedNode;
+        }
+
+        function _viewReady () {
             vm.onMounted();
         }
 
