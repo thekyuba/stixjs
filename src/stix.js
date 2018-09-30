@@ -53,13 +53,10 @@ import { Binding } from './engine';
 
                 if (data) {
                     const interpolatedPropName = _findInterpolation(child, vm.data);
+                    const bindingOpts = _getBindingOpts(child);
 
                     if (interpolatedPropName) {
-                        /**
-                         * TODO:
-                         * Decide what attribute to bind based on node type
-                         */
-                        vm.watchers[interpolatedPropName].addBinding(child, 'value', 'input');
+                        vm.watchers[interpolatedPropName].addBinding(bindingOpts);
                     }
                 }
 
@@ -74,6 +71,25 @@ import { Binding } from './engine';
             const propName = ownProps.find((prop) => template.includes(prop));
 
             return propName;
+        }
+
+        function _getBindingOpts (element) {
+            // two-way data binding
+            // currently works only for input fields
+            if (!element.childNodes.length && element.attributes.length) {
+                const boundAttr = Array.from(element.attributes).find((attr) => attr.value.match(/\{\{\s?(\w+)\s?\}\}/g));
+
+                if (boundAttr) {
+                    return {
+                        element,
+                        attribute: boundAttr.name,
+                        customEvent: 'input'
+                    };
+                }
+            }
+
+            // one-way data binding
+            return { element };
         }
 
         function _removeChildren (node) {

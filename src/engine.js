@@ -29,7 +29,9 @@ function Binding (config) {
      * @param {String} attribute
      * @param {String} customEvent
      */
-    this.addBinding = (element, attribute, customEvent) => {
+    this.addBinding = (bindingOpts) => {
+        const { element, attribute, customEvent } = bindingOpts;
+
         const binding = {
             element,
             attribute
@@ -42,23 +44,18 @@ function Binding (config) {
             binding.event = customEvent;
         }
         this.elementBindings.push(binding);
-        /**
-         * TODO:
-         * Refactor this method so that it knows it has to replace nodeValue in text nodes,
-         * value in inputs etc.
-         * Make usf of the attribute variable?
-         */
-        //element[attribute] = privateValue;
+
         this.syncViewModel(element, attribute);
-        return this;
     };
 
+    /**
+     * @param {DOM Object} element
+     * @param {String} attr // only passed for two-way data biding
+     */
     this.syncViewModel = (element, attr) => {
-        switch (element.nodeName) {
-        case 'INPUT':
+        if (attr) {
             element[attr] = privateValue;
-            break;
-        default:
+        } else {
             Array.from(element.childNodes).map((childNode) => {
                 // cache template only on initial interpolation
                 // this step is needed to keep track of props in curly braces
@@ -72,7 +69,6 @@ function Binding (config) {
                     childNode.nodeValue = _interpolate(childNode.cachedNodeValue, config.object);
                 }
             });
-            break;
         }
     };
 
