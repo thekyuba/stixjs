@@ -9,11 +9,11 @@ function Binding (config) {
 
     this.elementBindings = [];
 
-    this.valueGetter = () => {
+    this.getter = () => {
         return privateValue;
     };
 
-    this.valueSetter = (val) => {
+    this.setter = (val) => {
         privateValue = val;
         for (let i = 0; i < this.elementBindings.length; i++) {
             const binding = this.elementBindings[i];
@@ -39,7 +39,7 @@ function Binding (config) {
 
         if (customEvent) {
             element.addEventListener(customEvent, () => {
-                this.valueSetter(element[attribute]);
+                this.setter(element[attribute]);
             });
             binding.event = customEvent;
         }
@@ -73,8 +73,8 @@ function Binding (config) {
     };
 
     Object.defineProperty(config.object, config.property, {
-        get: this.valueGetter,
-        set: this.valueSetter
+        get: this.getter,
+        set: this.setter
     });
 
     config.object[config.property] = privateValue;

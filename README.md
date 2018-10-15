@@ -1,22 +1,62 @@
 # stixjs
 :exclamation: This is a work in progress
 
-StixJS is a simple user interface library / mini-framework inspired by Vuejs syntax
+My attempt at writing a simple user interface library / mini-framework inspired mainly by Vue.js.
 
-## Example
+## Features
+- interpolation
+- one-way data biding
+- two-way data biding
+- lifecycle hooks
+
+## Try it out
+1. Include ```stix.js``` from ```dist``` folder in your HTML (ES6 imports are not supported yet :disappointed:)
+2. Create a new instance of ```Stix``` and configure it 
+3. Exemplary config that uses most of the features can look something like this:
+
+Markup:
+```html
+<body>
+    <!-- Stix needs a root node where it will be bootstrapped -->
+    <div id="app"></div>
+
+    <!-- Scripts -->
+    <script src="./stix.js"></script>
+    <script src="./myScript.js"></script>
+</body>
+```
+
+JS:
 ```js
-const stix = new Stix(document.getElementById('app'), {
+const stixInstance = new Stix(document.getElementById('app'), {
     data: {
-        someProp: 'somePropValue'
+        myName: 'Rob',
+        myAge: 30
     },
     template: `
-        <div> {{ someProp }} </div>
+        <div> 
+            <h2>
+                <span>Hello world, my name is: {{ myName }} </span>
+                <span>and I'm {{ myAge }} years old </span>
+            </h2>
+            Use this input to set the age:
+            <input type="text" value="{{ myAge }}">
+        </div>
     `,
-    onMounted: function () {
-        console.log('View and model binded');
+    // At this point data is reactive
+    // but hasn't been interpolated yet
+    beforeMounted () {
+        this.data.myName = "Matt";
+    },
+    // View and model are binded
+    onMounted () {
         setTimeout(() => {
-            this.data.someProp = 'new prop value';
-        }, 1000)
+            this.data.myName = 'Gniewomir';
+        }, 2000);
+
+        setTimeout(() => {
+            this.data.myAge = 50;
+        }, 4000);
     }
-})
+});
 ```

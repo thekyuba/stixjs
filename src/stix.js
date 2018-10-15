@@ -23,10 +23,12 @@ import { Binding } from './engine';
 
         //lifecycle hooks
         this.onMounted = config.onMounted;
+        this.beforeMounted = config.beforeMounted;
 
         this.digest = function () {
             _setRootTemplate();
             _setReactiveData();
+            _reactiveDataReady();
             _bindViewToModel(this.rootNode, this.data);
             _viewReady();
         };
@@ -102,8 +104,16 @@ import { Binding } from './engine';
             return clonedNode;
         }
 
+        function _reactiveDataReady () {
+            if (vm.beforeMounted) {
+                vm.beforeMounted();
+            }
+        }
+
         function _viewReady () {
-            vm.onMounted();
+            if (vm.onMounted) {
+                vm.onMounted();
+            }
         }
 
         function _setRootNode () {

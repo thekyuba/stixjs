@@ -1,7 +1,7 @@
 {
   "name": "stixjs",
   "version": "1.0.0",
-  "description": "Interface library",
+  "description": "User interface library",
   "main": "stix.js",
   "scripts": {
     "dev": "webpack --mode development",
@@ -12,7 +12,7 @@
     "type": "git",
     "url": "git+https://github.com/thekyuba/stixjs.git"
   },
-  "author": "",
+  "author": "Jakub Bujakowski",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/thekyuba/stixjs/issues"
@@ -25,7 +25,7 @@
     "babel-loader": "^8.0.2",
     "eslint": "^5.6.0",
     "webpack": "^4.19.0",
-    "webpack-cli": "^3.1.0",
+    "webpack-cli": "^3.1.2",
     "webpack-dev-server": "^3.1.8"
   }
 }
