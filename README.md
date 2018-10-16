@@ -10,9 +10,10 @@ My attempt at writing a simple user interface library / mini-framework inspired 
 - lifecycle hooks
 
 ## Try it out
-1. Include ```stix.js``` from ```dist``` folder in your HTML (ES6 imports are not supported yet :disappointed:)
-2. Create a new instance of ```Stix``` and configure it 
-3. Exemplary config that uses most of the features can look something like this:
+1. Include ```stix.js``` from ```dist``` folder.
+2. Create a new instance of ```Stix``` passing in a root node and a config object as parameters.
+
+Exemplary config that uses most of the features can look something like this:
 
 Markup:
 ```html
